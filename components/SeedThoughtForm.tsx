@@ -40,15 +40,15 @@ export function SeedThoughtForm() {
       const seedThoughtId = seedData.data.id;
       console.log("✅ Seed thought created:", seedThoughtId);
 
-      // Now generate 10 children connected to the seed
-      console.log("🚀 Generating 10 child thoughts...");
+      // Now generate 5 children connected to the seed (limited to avoid rate limits)
+      console.log("🚀 Generating 5 child thoughts...");
       await branchThoughts.mutateAsync({
         thoughtId: seedThoughtId,
         thoughtText: seedText.trim(),
-        count: 10,
+        count: 5,
       });
 
-      console.log("✅ Generated 10 children for seed thought!");
+      console.log("✅ Generated children for seed thought!");
       
       // Refresh thoughts
       queryClient.invalidateQueries({ queryKey: ["thoughts"] });
@@ -73,7 +73,7 @@ export function SeedThoughtForm() {
           Plant a Seed Thought
         </h2>
         <p className="text-gray-400 mb-6">
-          Enter one thought → AI generates 10 connected thoughts → Click any to expand with 10 more
+          Enter one thought → AI generates 5 connected thoughts → Click any to expand with 5 more
         </p>
 
         {/* How it works */}
@@ -81,8 +81,8 @@ export function SeedThoughtForm() {
           <p className="text-xs text-gray-400">
             <span className="text-purple-300 font-medium">How it works:</span><br />
             1️⃣ Enter your seed thought<br />
-            2️⃣ AI generates 10 related thoughts<br />
-            3️⃣ Click any thought → 10 more spawn from it<br />
+            2️⃣ AI generates 5 related thoughts<br />
+            3️⃣ Click any thought → 5 more spawn from it<br />
             4️⃣ Keep clicking to grow the network!
           </p>
         </div>
@@ -123,10 +123,10 @@ export function SeedThoughtForm() {
             {isGenerating ? (
               <span className="flex items-center justify-center gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Generating 10 thoughts...
+                Generating 5 thoughts...
               </span>
             ) : (
-              "🌱 Plant Seed & Generate 10 Thoughts"
+              "🌱 Plant Seed & Generate 5 Thoughts"
             )}
           </button>
         </form>

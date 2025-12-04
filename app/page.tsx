@@ -24,11 +24,11 @@ export default function Home() {
     limit: 200,
   });
 
-  // Auto-refresh to keep UI updated
+  // Auto-refresh to keep UI updated (every 2 seconds)
   useEffect(() => {
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["thoughts"] });
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [queryClient]);
@@ -48,21 +48,21 @@ export default function Home() {
       return;
     }
 
-    console.log(`🚀 Generating 10 children for: "${thought.text.substring(0, 50)}..."`);
+    console.log(`🚀 Generating 5 children for: "${thought.text.substring(0, 50)}..."`);
     setIsGenerating(true);
 
     try {
-      // Generate 10 child nodes using Gemini API
+      // Generate 5 child nodes using Gemini API (limited to avoid rate limits)
       await branchThoughts.mutateAsync({
         thoughtId: thought.id,
         thoughtText: thought.text,
-        count: 10,
+        count: 5,
       });
 
       // Mark this node as expanded
       setExpandedNodes(prev => new Set([...prev, thought.id]));
       
-      console.log(`✅ Generated 10 children!`);
+      console.log(`✅ Generated children!`);
       
       // Refresh thoughts
       queryClient.invalidateQueries({ queryKey: ["thoughts"] });
@@ -119,7 +119,7 @@ export default function Home() {
             <div className="absolute top-4 right-4 bg-purple-500/20 border border-purple-500/50 rounded-lg px-4 py-2 text-purple-300 text-sm backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400"></div>
-                🌱 Generating 10 child thoughts...
+                🌱 Generating 5 child thoughts...
               </div>
             </div>
           )}
@@ -139,9 +139,9 @@ export default function Home() {
                 ))}
               </div>
               {expandedNodes.has(selectedThought.id) ? (
-                <p className="text-xs text-green-400 mt-2">✓ Already expanded (10 children)</p>
+                <p className="text-xs text-green-400 mt-2">✓ Already expanded</p>
               ) : (
-                <p className="text-xs text-purple-400 mt-2">Click to expand with 10 children</p>
+                <p className="text-xs text-purple-400 mt-2">Click to expand with 5 children</p>
               )}
             </div>
           )}
@@ -153,7 +153,7 @@ export default function Home() {
           
           {/* Instructions */}
           <div className="absolute bottom-4 right-4 bg-gray-900/80 border border-gray-800 rounded-lg px-3 py-2 text-xs text-gray-500 backdrop-blur-sm max-w-xs">
-            💡 Click any node to generate 10 related thoughts from it
+            💡 Click any node to generate 5 related thoughts from it
           </div>
         </div>
       )}

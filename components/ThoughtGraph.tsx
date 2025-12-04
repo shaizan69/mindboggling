@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import ReactFlow, {
   Node,
   Edge,
@@ -31,10 +31,10 @@ const nodeTypes: NodeTypes = {
 export function ThoughtGraph({ thoughts, onNodeClick }: ThoughtGraphProps) {
   const { selectedNodeId, setSelectedNodeId } = useGraphStore();
 
-  // Transform thoughts to nodes
+  // Transform thoughts to nodes - CIRCULAR LAYOUT (original design)
   const initialNodes = useMemo(() => {
     const nodes: Node[] = thoughts.map((thought, index) => {
-      // Simple circular layout for now
+      // Circular layout
       const angle = (index / thoughts.length) * 2 * Math.PI;
       const radius = 300;
       const x = Math.cos(angle) * radius;
@@ -54,7 +54,7 @@ export function ThoughtGraph({ thoughts, onNodeClick }: ThoughtGraphProps) {
     return nodes;
   }, [thoughts, selectedNodeId]);
 
-  // Create edges based on connections
+  // Create edges based on connections (original design)
   const initialEdges = useMemo(() => {
     const edges: Edge[] = [];
     const connectionMap = new Map<string, Set<string>>();
@@ -102,6 +102,12 @@ export function ThoughtGraph({ thoughts, onNodeClick }: ThoughtGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // UPDATE nodes and edges when thoughts change
+  useEffect(() => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  }, [initialNodes, initialEdges, setNodes, setEdges]);
+
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
@@ -122,7 +128,6 @@ export function ThoughtGraph({ thoughts, onNodeClick }: ThoughtGraphProps) {
     (_event: React.MouseEvent, node: Node) => {
       const thought = thoughts.find((t) => t.id === node.id);
       if (thought) {
-        // Trigger expansion - this will be handled by parent component
         if (onNodeClick) {
           onNodeClick(thought);
         }
@@ -156,4 +161,3 @@ export function ThoughtGraph({ thoughts, onNodeClick }: ThoughtGraphProps) {
     </div>
   );
 }
-
