@@ -33,15 +33,23 @@ ALTER TABLE user_submissions ENABLE ROW LEVEL SECURITY;
 -- Drop existing policies if they exist (to allow re-running this script)
 DROP POLICY IF EXISTS "Thoughts are viewable by everyone" ON thoughts;
 DROP POLICY IF EXISTS "Anyone can insert thoughts" ON thoughts;
+DROP POLICY IF EXISTS "Anyone can update thoughts" ON thoughts;
+DROP POLICY IF EXISTS "Anyone can delete thoughts" ON thoughts;
 DROP POLICY IF EXISTS "User submissions are viewable by everyone" ON user_submissions;
 DROP POLICY IF EXISTS "Anyone can insert user submissions" ON user_submissions;
 
--- RLS Policies for thoughts (public read, authenticated write)
+-- RLS Policies for thoughts (public read/write/delete)
 CREATE POLICY "Thoughts are viewable by everyone" ON thoughts
   FOR SELECT USING (true);
 
 CREATE POLICY "Anyone can insert thoughts" ON thoughts
   FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Anyone can update thoughts" ON thoughts
+  FOR UPDATE USING (true);
+
+CREATE POLICY "Anyone can delete thoughts" ON thoughts
+  FOR DELETE USING (true);
 
 -- RLS Policies for user_submissions
 CREATE POLICY "User submissions are viewable by everyone" ON user_submissions

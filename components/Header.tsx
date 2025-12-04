@@ -28,11 +28,17 @@ export function Header() {
         method: "DELETE",
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to reset");
+      const result = await response.json();
+
+      if (!response.ok || result.error) {
+        console.error("Reset failed:", result);
+        alert(
+          `Failed to clear thoughts!\n\n${result.hint || result.error}\n\nGo to Supabase Dashboard → SQL Editor and run:\n\nCREATE POLICY "Anyone can delete thoughts" ON thoughts FOR DELETE USING (true);`
+        );
+        return;
       }
 
-      console.log("✅ All thoughts cleared!");
+      console.log("✅ All thoughts cleared!", result);
       
       // Invalidate cache to refresh the UI
       queryClient.invalidateQueries({ queryKey: ["thoughts"] });
@@ -41,7 +47,7 @@ export function Header() {
       window.location.href = "/";
     } catch (error) {
       console.error("Failed to reset:", error);
-      alert("Failed to clear thoughts. Try again.");
+      alert("Failed to clear thoughts. Check console for details.");
     } finally {
       setIsResetting(false);
     }
