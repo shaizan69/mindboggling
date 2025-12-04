@@ -3,102 +3,74 @@
 import { Layout } from "@/components/Layout";
 import { ThoughtGraph } from "@/components/ThoughtGraph";
 import { SeedThoughtForm } from "@/components/SeedThoughtForm";
-import { useThoughts, useContinueInfiniteGeneration } from "@/hooks/useThoughts";
+import { useThoughts } from "@/hooks/useThoughts";
 import { useBranchThoughts } from "@/hooks/useExpandThoughts";
 import { useUIStore } from "@/stores/useUIStore";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Thought } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function Home() {
   const { filters } = useUIStore();
   const [selectedThought, setSelectedThought] = useState<Thought | null>(null);
-  const [activeInfiniteNodes, setActiveInfiniteNodes] = useState<Set<string>>(new Set());
-  const branchThoughts = useBranchThoughts();
-  const continueGeneration = useContinueInfiniteGeneration();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
-  const infiniteIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const branchThoughts = useBranchThoughts();
 
   const { data: thoughts = [], isLoading, error } = useThoughts({
     mood: filters.mood || undefined,
     search: filters.searchQuery || undefined,
-    limit: 200, // Increased limit for infinite mode
+    limit: 200,
   });
 
-  // Auto-refresh when infinite mode is active
+  // Auto-refresh to keep UI updated
   useEffect(() => {
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["thoughts"] });
-    }, 2000); // Faster refresh for infinite mode
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [queryClient]);
 
-  // Cleanup infinite intervals on unmount
-  useEffect(() => {
-    return () => {
-      infiniteIntervalsRef.current.forEach((interval) => {
-        clearInterval(interval);
-      });
-      infiniteIntervalsRef.current.clear();
-    };
-  }, []);
-
   const handleNodeClick = async (thought: Thought) => {
     setSelectedThought(thought);
-    
-    // Check if this node is already generating infinitely
-    if (activeInfiniteNodes.has(thought.id)) {
-      console.log(`🛑 Node ${thought.id} already generating infinitely, skipping...`);
+
+    // Check if this node has already been expanded
+    if (expandedNodes.has(thought.id)) {
+      console.log(`⚠️ Node "${thought.text.substring(0, 30)}..." already expanded.`);
       return;
     }
 
-    console.log(`🚀 Starting INFINITE generation from node: ${thought.id}`);
-    
-    // Add to active infinite nodes
-    setActiveInfiniteNodes(prev => new Set([...prev, thought.id]));
-    
-    // Start infinite generation for this node
-    startInfiniteGenerationForNode(thought);
-  };
+    // Don't generate if already generating
+    if (isGenerating) {
+      console.log(`⚠️ Already generating, please wait...`);
+      return;
+    }
 
-  const startInfiniteGenerationForNode = (thought: Thought) => {
-    const sessionId = `node_${thought.id}_${Date.now()}`;
-    let generationCount = 0;
-    let currentLastThoughtId = thought.id;
-    let currentPreviousThoughts = [thought.text];
+    console.log(`🚀 Generating 10 children for: "${thought.text.substring(0, 50)}..."`);
+    setIsGenerating(true);
 
-    const generateNext = async () => {
-      generationCount++;
-      console.log(`🔄 Node ${thought.id} - Generation ${generationCount}`);
+    try {
+      // Generate 10 child nodes using Gemini API
+      await branchThoughts.mutateAsync({
+        thoughtId: thought.id,
+        thoughtText: thought.text,
+        count: 10,
+      });
+
+      // Mark this node as expanded
+      setExpandedNodes(prev => new Set([...prev, thought.id]));
       
-      try {
-        const result = await continueGeneration.mutateAsync({
-          sessionId,
-          lastThoughtId: currentLastThoughtId,
-          previousThoughts: currentPreviousThoughts,
-        });
-
-        if (result) {
-          currentLastThoughtId = result.lastThoughtId;
-          currentPreviousThoughts = result.previousThoughts;
-          console.log(`✅ Node ${thought.id} - Generated: ${result.newThought.text.substring(0, 50)}...`);
-          queryClient.invalidateQueries({ queryKey: ["thoughts"] });
-        }
-      } catch (error) {
-        console.error(`❌ Node ${thought.id} - Generation ${generationCount} error:`, error);
-        // Continue generating even on errors
-      }
-    };
-
-    // Generate immediately
-    generateNext();
-
-    // Start infinite loop - every 2 seconds
-    const interval = setInterval(generateNext, 2000);
-    infiniteIntervalsRef.current.set(thought.id, interval);
-
-    console.log(`🌊 Node ${thought.id} infinite generation started`);
+      console.log(`✅ Generated 10 children!`);
+      
+      // Refresh thoughts
+      queryClient.invalidateQueries({ queryKey: ["thoughts"] });
+    } catch (error) {
+      console.error("❌ Failed to generate children:", error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (isLoading) {
@@ -141,20 +113,22 @@ export default function Home() {
             thoughts={thoughts}
             onNodeClick={handleNodeClick}
           />
-          {activeInfiniteNodes.size > 0 && (
+          
+          {/* Generation status */}
+          {isGenerating && (
             <div className="absolute top-4 right-4 bg-purple-500/20 border border-purple-500/50 rounded-lg px-4 py-2 text-purple-300 text-sm backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <div className="animate-pulse w-2 h-2 bg-purple-400 rounded-full"></div>
-                <div className="animate-pulse w-2 h-2 bg-purple-400 rounded-full" style={{animationDelay: '0.2s'}}></div>
-                <div className="animate-pulse w-2 h-2 bg-purple-400 rounded-full" style={{animationDelay: '0.4s'}}></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-400"></div>
+                🌱 Generating 10 child thoughts...
               </div>
-              🌊 {activeInfiniteNodes.size} nodes generating infinitely...
             </div>
           )}
+          
+          {/* Selected thought info */}
           {selectedThought && (
             <div className="absolute bottom-4 left-4 bg-gray-900/90 border border-gray-800 rounded-lg p-4 max-w-md backdrop-blur-sm">
               <p className="text-sm text-gray-300">{selectedThought.text}</p>
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-2 flex-wrap">
                 {selectedThought.tags?.map((tag) => (
                   <span
                     key={tag}
@@ -164,8 +138,23 @@ export default function Home() {
                   </span>
                 ))}
               </div>
+              {expandedNodes.has(selectedThought.id) ? (
+                <p className="text-xs text-green-400 mt-2">✓ Already expanded (10 children)</p>
+              ) : (
+                <p className="text-xs text-purple-400 mt-2">Click to expand with 10 children</p>
+              )}
             </div>
           )}
+          
+          {/* Stats */}
+          <div className="absolute top-4 left-4 bg-gray-900/80 border border-gray-800 rounded-lg px-3 py-2 text-xs text-gray-400 backdrop-blur-sm">
+            {thoughts.length} thoughts • {expandedNodes.size} expanded nodes
+          </div>
+          
+          {/* Instructions */}
+          <div className="absolute bottom-4 right-4 bg-gray-900/80 border border-gray-800 rounded-lg px-3 py-2 text-xs text-gray-500 backdrop-blur-sm max-w-xs">
+            💡 Click any node to generate 10 related thoughts from it
+          </div>
         </div>
       )}
     </Layout>

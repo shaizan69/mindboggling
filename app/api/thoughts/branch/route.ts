@@ -73,11 +73,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update parent thought with connections
+    // Update parent thought with connections (APPEND to existing)
     if (thoughtId && connectionIds.length > 0) {
+      // First get existing connections
+      const { data: parentThought } = await supabase
+        .from("thoughts")
+        .select("connections")
+        .eq("id", thoughtId)
+        .single();
+      
+      const existingConnections = parentThought?.connections || [];
+      const allConnections = [...existingConnections, ...connectionIds];
+      
       await supabase
         .from("thoughts")
-        .update({ connections: connectionIds })
+        .update({ connections: allConnections })
         .eq("id", thoughtId);
     }
 

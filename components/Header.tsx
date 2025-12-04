@@ -1,15 +1,51 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useUIStore } from "@/stores/useUIStore";
 import { useGraphStore } from "@/stores/useGraphStore";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function Header() {
-  const { setSidebarOpen, setModalOpen } = useUIStore();
+  const { setSidebarOpen } = useUIStore();
   const { viewMode, setViewMode } = useGraphStore();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleNewSeed = async () => {
+    const confirmed = window.confirm(
+      "This will clear ALL thoughts and start fresh. Are you sure?"
+    );
+    
+    if (!confirmed) return;
+
+    setIsResetting(true);
+    try {
+      const response = await fetch("/api/thoughts/reset", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to reset");
+      }
+
+      console.log("✅ All thoughts cleared!");
+      
+      // Invalidate cache to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ["thoughts"] });
+      
+      // Force reload to show seed form
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Failed to reset:", error);
+      alert("Failed to clear thoughts. Try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/80 backdrop-blur-sm">
@@ -49,10 +85,11 @@ export function Header() {
             </Link>
           </div>
           <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg transition-all font-medium text-sm"
+            onClick={handleNewSeed}
+            disabled={isResetting}
+            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg transition-all font-medium text-sm disabled:opacity-50"
           >
-            New Seed
+            {isResetting ? "Clearing..." : "New Seed"}
           </button>
           <button
             onClick={() => setSidebarOpen(true)}
@@ -78,4 +115,3 @@ export function Header() {
     </header>
   );
 }
-
