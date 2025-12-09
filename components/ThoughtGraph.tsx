@@ -137,7 +137,7 @@ export function ThoughtGraph({ thoughts, onNodeClick }: ThoughtGraphProps) {
   );
 
   return (
-    <div className="w-full h-full bg-black">
+    <div className="w-full h-full bg-transparent">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -148,9 +148,8 @@ export function ThoughtGraph({ thoughts, onNodeClick }: ThoughtGraphProps) {
         onNodeDoubleClick={onNodeDoubleClick}
         nodeTypes={nodeTypes}
         fitView
-        className="bg-black"
+        className="bg-transparent"
       >
-        <Background color="#333" gap={16} />
         <Controls className="bg-gray-900 border-gray-700" />
         <MiniMap
           className="bg-gray-900 border-gray-700"

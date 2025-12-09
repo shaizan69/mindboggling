@@ -78,7 +78,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-screen bg-black">
+        <div className="flex items-center justify-center h-screen bg-transparent">
           <div className="text-center flex flex-col items-center">
             <Loader />
             <p className="text-gray-400 mt-12">Loading mind network...</p>
