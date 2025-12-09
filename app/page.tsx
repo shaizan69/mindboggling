@@ -10,6 +10,8 @@ import { useState, useEffect } from "react";
 import { Thought } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { Loader } from "@/components/Loader";
+
 export default function Home() {
   const { filters } = useUIStore();
   const [selectedThought, setSelectedThought] = useState<Thought | null>(null);
@@ -35,7 +37,7 @@ export default function Home() {
 
   const handleNodeClick = async (thought: Thought) => {
     setSelectedThought(thought);
-
+    
     // Check if this node has already been expanded
     if (expandedNodes.has(thought.id)) {
       console.log(`⚠️ Node "${thought.text.substring(0, 30)}..." already expanded.`);
@@ -53,11 +55,11 @@ export default function Home() {
 
     try {
       // Generate 5 child nodes using Gemini API (limited to avoid rate limits)
-      await branchThoughts.mutateAsync({
-        thoughtId: thought.id,
-        thoughtText: thought.text,
+        await branchThoughts.mutateAsync({
+          thoughtId: thought.id,
+          thoughtText: thought.text,
         count: 5,
-      });
+        });
 
       // Mark this node as expanded
       setExpandedNodes(prev => new Set([...prev, thought.id]));
@@ -66,9 +68,9 @@ export default function Home() {
       
       // Refresh thoughts
       queryClient.invalidateQueries({ queryKey: ["thoughts"] });
-    } catch (error) {
+      } catch (error) {
       console.error("❌ Failed to generate children:", error);
-    } finally {
+      } finally {
       setIsGenerating(false);
     }
   };
@@ -76,10 +78,10 @@ export default function Home() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading mind network...</p>
+        <div className="flex items-center justify-center h-screen bg-black">
+          <div className="text-center flex flex-col items-center">
+            <Loader />
+            <p className="text-gray-400 mt-12">Loading mind network...</p>
           </div>
         </div>
       </Layout>
