@@ -5,15 +5,33 @@ import { motion } from "framer-motion";
 import { useUIStore } from "@/stores/useUIStore";
 import { useGraphStore } from "@/stores/useGraphStore";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { ViewSwitch } from "./ViewSwitch";
+import { NewSeedButton } from "./NewSeedButton";
 
 export function Header() {
   const { setSidebarOpen } = useUIStore();
   const { viewMode, setViewMode } = useGraphStore();
   const pathname = usePathname();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [isResetting, setIsResetting] = useState(false);
+  
+  // Determine if switch should be checked (true = stream, false = map)
+  const isStreamView = pathname === "/stream";
+  
+  const handleSwitchChange = (checked: boolean) => {
+    if (checked) {
+      // Switch to stream view
+      router.push("/stream");
+      setViewMode("stream");
+    } else {
+      // Switch to map view
+      router.push("/");
+      setViewMode("map");
+    }
+  };
 
   const handleNewSeed = async () => {
     const confirmed = window.confirm(
@@ -67,36 +85,13 @@ export function Header() {
           </motion.h1>
         </Link>
         <div className="flex items-center gap-4">
-          <div className="flex gap-2 bg-gray-900 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("map")}
-              className={`px-4 py-2 rounded-md text-sm transition-colors ${
-                viewMode === "map"
-                  ? "bg-purple-500 text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Map
-            </button>
-            <Link href="/stream">
-              <button
-                className={`px-4 py-2 rounded-md text-sm transition-colors ${
-                  pathname === "/stream"
-                    ? "bg-purple-500 text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                Stream
-              </button>
-            </Link>
-          </div>
-          <button
+          <ViewSwitch checked={isStreamView} onChange={handleSwitchChange} />
+          <NewSeedButton
             onClick={handleNewSeed}
             disabled={isResetting}
-            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg transition-all font-medium text-sm disabled:opacity-50"
           >
             {isResetting ? "Clearing..." : "New Seed"}
-          </button>
+          </NewSeedButton>
           <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg hover:bg-gray-800 transition-colors"

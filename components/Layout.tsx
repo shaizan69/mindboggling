@@ -6,7 +6,7 @@ import { Sidebar } from "./Sidebar";
 import { Modal } from "./Modal";
 import { ThoughtForm } from "./ThoughtForm";
 import { useUIStore } from "@/stores/useUIStore";
-import { PixelBackground } from "./PixelBackground";
+import { LiquidBackground } from "./LiquidBackground";
 
 interface LayoutProps {
   children: ReactNode;
@@ -17,7 +17,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-black text-white relative isolate">
-      <PixelBackground />
+      <LiquidBackground />
       <Header />
       <div className="flex relative z-10">
         <Sidebar />
