@@ -43,7 +43,7 @@
   transform: translateY(0);
 }
 
-.wrapper button.disabled .buttonTop {
+.wrapper button:disabled .buttonTop {
   transform: translateY(-0.2em);
 }
 

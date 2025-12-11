@@ -6,13 +6,15 @@
   cursor: pointer;
   border-radius: 16px;
   overflow: hidden;
-  transition: transform 0.2s ease;
   min-width: 200px;
   max-width: 300px;
+  animation: floating 3s ease-in-out infinite;
+  transition: scale 0.2s ease;
 }
 
 .gradientNode:hover {
-  transform: scale(1.03);
+  scale: 1.03;
+  animation-duration: 2s;
 }
 
 .gradientNode::before {
@@ -74,12 +76,21 @@
 }
 
 .gradientNode:active {
-  transform: scale(0.99);
+  scale: 0.99;
 }
 
 @keyframes hue-rotating {
   to {
     filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 

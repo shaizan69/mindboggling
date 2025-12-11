@@ -13,6 +13,10 @@ interface ThoughtNodeData {
 
 function ThoughtNodeComponent({ data, selected }: NodeProps<ThoughtNodeData>) {
   const { thought } = data;
+  
+  // Create a unique animation delay based on node ID for staggered floating
+  const nodeIdHash = thought.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const animationDelay = (nodeIdHash % 3000) / 1000; // Delay between 0-3 seconds
 
   return (
     <div
@@ -20,6 +24,7 @@ function ThoughtNodeComponent({ data, selected }: NodeProps<ThoughtNodeData>) {
         styles.gradientNode,
         selected && "ring-2 ring-white ring-offset-2 ring-offset-black"
       )}
+      style={{ animationDelay: `${animationDelay}s` }}
     >
       <Handle type="target" position={Position.Top} className="w-2 h-2" />
       <div className={cn("text-sm mb-1 line-clamp-3 relative z-10", styles.gradientText)}>
