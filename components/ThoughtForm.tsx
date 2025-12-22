@@ -30,7 +30,7 @@ export function ThoughtForm() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const result = await generateThought.mutateAsync();
+      const result = await generateThought.mutateAsync({});
       if (result?.text) {
         setText(result.text);
       } else {
