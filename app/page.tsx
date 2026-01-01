@@ -27,22 +27,30 @@ export default function Home() {
     limit: 200,
   });
 
-  // Clear ALL cache and force fresh data on first mount
+  // Force fresh data on first visit only
   useEffect(() => {
     if (!hasInitialized.current) {
       hasInitialized.current = true;
-      // Clear all cached queries
-      queryClient.clear();
-      // Force a fresh fetch
-      queryClient.refetchQueries({ queryKey: ["thoughts"] });
+      const isFirstVisit = !sessionStorage.getItem('mindmesh_visited');
+      
+      if (isFirstVisit) {
+        // First visit - remove cached data and fetch fresh
+        sessionStorage.setItem('mindmesh_visited', 'true');
+        queryClient.removeQueries({ queryKey: ["thoughts"] });
+      }
+      // Otherwise, let React Query handle it with staleTime
     }
   }, [queryClient]);
 
-  // Auto-refresh to keep UI updated (every 2 seconds)
+  // Auto-refresh to keep UI updated (every 10 seconds, only if data is stale)
   useEffect(() => {
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["thoughts"] });
-    }, 2000);
+      // Invalidate to mark as stale, but won't refetch if component isn't mounted or data is fresh
+      queryClient.invalidateQueries({ 
+        queryKey: ["thoughts"],
+        exact: false
+      });
+    }, 10000); // Check every 10 seconds
 
     return () => clearInterval(interval);
   }, [queryClient]);
