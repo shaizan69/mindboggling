@@ -22,6 +22,10 @@ export function useThoughts(filters?: {
       const data = await response.json();
       return data.data as Thought[];
     },
+    refetchOnMount: true, // Always refetch on mount for fresh data
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    staleTime: 0, // Data is immediately stale - always fetch fresh
+    gcTime: 0, // Don't cache data - always fetch fresh (gcTime replaces cacheTime in v5)
   });
 }
 

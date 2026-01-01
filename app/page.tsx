@@ -6,7 +6,7 @@ import { SeedThoughtForm } from "@/components/SeedThoughtForm";
 import { useThoughts } from "@/hooks/useThoughts";
 import { useBranchThoughts } from "@/hooks/useExpandThoughts";
 import { useUIStore } from "@/stores/useUIStore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Thought } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -19,12 +19,24 @@ export default function Home() {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
   const branchThoughts = useBranchThoughts();
+  const hasInitialized = useRef(false);
 
   const { data: thoughts = [], isLoading, error } = useThoughts({
     mood: filters.mood || undefined,
     search: filters.searchQuery || undefined,
     limit: 200,
   });
+
+  // Clear ALL cache and force fresh data on first mount
+  useEffect(() => {
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      // Clear all cached queries
+      queryClient.clear();
+      // Force a fresh fetch
+      queryClient.refetchQueries({ queryKey: ["thoughts"] });
+    }
+  }, [queryClient]);
 
   // Auto-refresh to keep UI updated (every 2 seconds)
   useEffect(() => {
@@ -110,7 +122,7 @@ export default function Home() {
           <SeedThoughtForm />
         </div>
       ) : (
-        <div className="relative h-screen w-full">
+        <div className="relative h-screen w-full overflow-hidden">
           <ThoughtGraph
             thoughts={thoughts}
             onNodeClick={handleNodeClick}
@@ -126,11 +138,11 @@ export default function Home() {
             </div>
           )}
           
-          {/* Selected thought info */}
+          {/* Selected thought info - fixed positioning to avoid cutoff */}
           {selectedThought && (
-            <div className="absolute bottom-4 left-4 bg-gray-900/90 border border-gray-800 rounded-lg p-4 max-w-md backdrop-blur-sm">
-              <p className="text-sm text-gray-300">{selectedThought.text}</p>
-              <div className="flex gap-2 mt-2 flex-wrap">
+            <div className="fixed bottom-6 left-6 right-6 sm:right-auto sm:max-w-lg bg-gray-900/95 border border-gray-800 rounded-lg p-5 backdrop-blur-md z-[100] shadow-2xl" style={{ maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+              <p className="text-sm text-gray-300 break-words leading-relaxed pr-2">{selectedThought.text}</p>
+              <div className="flex gap-2 mt-3 flex-wrap">
                 {selectedThought.tags?.map((tag) => (
                   <span
                     key={tag}
@@ -141,9 +153,9 @@ export default function Home() {
                 ))}
               </div>
               {expandedNodes.has(selectedThought.id) ? (
-                <p className="text-xs text-green-400 mt-2">✓ Already expanded</p>
+                <p className="text-xs text-green-400 mt-3">✓ Already expanded</p>
               ) : (
-                <p className="text-xs text-purple-400 mt-2">Click to expand with 5 children</p>
+                <p className="text-xs text-purple-400 mt-3">Click to expand with 5 children</p>
               )}
             </div>
           )}
